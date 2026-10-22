@@ -22,8 +22,8 @@ const isCurrent = (href: string) => {
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
-		<link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href={withBase('/rss.xml')} />
+		<link rel="icon" type="image/png" href={withBase('/favicon.png')} />
+		<link rel="apple-touch-icon" href={withBase('/favicon.png')} />
 		<link rel="sitemap" href={withBase('/sitemap-index.xml')} />
 		<link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
 		<title>{pageTitle}</title>
@@ -55,7 +55,7 @@ const isCurrent = (href: string) => {
 			<footer class="site-footer">
 				<p>{SITE_DESCRIPTION}</p>
 				<p>
-					<a href="https://github.com/XP-Robotics">GitHub</a> · <a href={withBase('/rss.xml')}>RSS</a>
+					<a href="https://github.com/XP-Robotics">GitHub</a>
 				</p>
 				<p>© {new Date().getFullYear()} {SITE_TITLE}</p>
 			</footer>
