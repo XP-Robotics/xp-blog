@@ -1,0 +1,20 @@
+---
+import Base from '../layouts/Base.astro';
+import PostList from '../components/PostList.astro';
+import { getPosts } from '../lib/posts';
+
+const posts = await getPosts();
+---
+
+<Base>
+	<section class="intro">
+		<p class="serif" style="font-size:22px;line-height:1.35">
+			We build robots that learn from people.
+		</p>
+		<p class="muted">
+			Notes on egocentric data, retargeting, and robot learning from the XP Robotics team.
+		</p>
+	</section>
+	<hr class="divider" />
+	<PostList posts={posts} />
+</Base>

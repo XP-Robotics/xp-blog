@@ -1,0 +1,22 @@
+---
+import { withBase } from '../lib/url';
+
+interface Props {
+	src: string;
+	alt?: string;
+	caption?: string;
+	video?: boolean;
+}
+
+const { src: rawSrc, alt = '', caption, video = /\.(mp4|webm)$/i.test(rawSrc) } = Astro.props;
+const src = withBase(rawSrc);
+---
+
+<figure class="figure">
+	{video ? (
+		<video src={src} autoplay muted loop playsinline preload="metadata" aria-label={alt} />
+	) : (
+		<img src={src} alt={alt} loading="lazy" />
+	)}
+	{caption && <figcaption>{caption}</figcaption>}
+</figure>

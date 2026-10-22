@@ -1,0 +1,64 @@
+---
+import '../styles/global.css';
+import { NAV, SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import { withBase } from '../lib/url';
+
+interface Props {
+	title?: string;
+	description?: string;
+}
+
+const { title, description = SITE_DESCRIPTION } = Astro.props;
+const pageTitle = title ? `${title} | ${SITE_TITLE}` : SITE_TITLE;
+const path = Astro.url.pathname.replace(/\/$/, '');
+const isCurrent = (href: string) => {
+	const target = withBase(href).replace(/\/$/, '');
+	return href === '/' ? path === target : path.startsWith(target);
+};
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
+		<link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href={withBase('/rss.xml')} />
+		<link rel="sitemap" href={withBase('/sitemap-index.xml')} />
+		<link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+		<title>{pageTitle}</title>
+		<meta name="description" content={description} />
+		<meta property="og:title" content={pageTitle} />
+		<meta property="og:description" content={description} />
+		<meta property="og:type" content="website" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap"
+		/>
+		<slot name="head" />
+	</head>
+	<body>
+		<div class="page">
+			<header class="site-header">
+				<a class="brand" href={withBase('/')}>{SITE_TITLE}</a>
+				<nav>
+					{NAV.map(({ href, label }) => (
+						<a href={withBase(href)} aria-current={isCurrent(href) ? 'page' : undefined}>{label}</a>
+					))}
+				</nav>
+			</header>
+			<main>
+				<slot />
+			</main>
+			<footer class="site-footer">
+				<p>{SITE_DESCRIPTION}</p>
+				<p>
+					<a href="https://github.com/XP-Robotics">GitHub</a> · <a href={withBase('/rss.xml')}>RSS</a>
+				</p>
+				<p>© {new Date().getFullYear()} {SITE_TITLE}</p>
+			</footer>
+		</div>
+	</body>
+</html>
