@@ -7,8 +7,9 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
 export default defineConfig({
-	// Served by GitHub Pages under the custom domain in public/CNAME.
-	site: 'https://blog.xphirobotics.com',
+	// GitHub Pages project site. For a custom domain, set `site` to it, drop `base`, and add public/CNAME.
+	site: 'https://xp-robotics.github.io',
+	base: '/xp-blog',
 	integrations: [mdx(), sitemap()],
 	markdown: {
 		processor: unified({ remarkPlugins: [remarkMath], rehypePlugins: [rehypeKatex] }),
