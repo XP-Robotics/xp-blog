@@ -1,0 +1,92 @@
+---
+title: "egokit: from raw first-person video to robot training data"
+description: How we turn hours of head-camera footage of people at work into clean, labelled datasets with 3D hands that robot-learning code can load directly.
+date: 2026-10-29
+authors: [Shrivathsa M S]
+---
+
+import Figure from '../../components/Figure.astro';
+import FigureGrid from '../../components/FigureGrid.astro';
+
+Robots learn manipulation from demonstrations, and the most scalable way to capture training data is to learn from people as they work in their day to day jobs. In pretraining, egocentric video shows a model how hands approach, grasp and release objects, how objects move and deform when handled, and which steps follow in a real task. That prior on hand pose, contact and task structure means far less robot data is needed to fine-tune a policy. People do dexterous manipulation for hours every day, across a broad range of tasks from complex repairs to folding clothes, and every recorded hour is something a robot can learn from.
+
+<FigureGrid cols={2}>
+	<Figure src="/media/egokit/raw-strip-wire.mp4" alt="Head-camera footage of a worker stripping wire" caption="Strip wire" />
+	<Figure src="/media/egokit/raw-solder-component-on-board.mp4" alt="Head-camera footage of a worker soldering a circuit board" caption="Solder a component" />
+	<Figure src="/media/egokit/raw-label-box.mp4" alt="Head-camera footage of a worker labelling a box" caption="Label a box" />
+	<Figure src="/media/egokit/raw-assemble-part.mp4" alt="Head-camera footage of a worker assembling a part" caption="Assemble a part" />
+</FigureGrid>
+
+The catch is that raw footage is not training data. Some of it is blurry or pointed at the ceiling. Nothing says where it was filmed, what task is happening, or where one step ends and the next begins. And a robot needs to know where the hands are in 3D, which a flat video doesn't tell you.
+
+egokit is the toolkit we built at xPhi to close that gap. It takes a folder of first-person video and turns it into a labelled dataset that robot-learning code can load directly.
+
+## The pipeline at a glance
+
+<Figure src="/media/egokit/pipeline.svg" alt="egokit pipeline: raw head-camera video goes through clean, scene and steps, hands and export, and comes out as a dataset ready for robot training" />
+
+## Step 1: throw out what you can't use
+
+Head cameras film a lot of footage nobody would train on. The light is off, the camera sits on a table, a strap hangs over the lens, the wearer whips their head around, the recorder drops frames.
+
+The clean stage finds these stretches in one quick pass, using only cheap image measurements and no models. It checks for six things:
+
+- **dark:** too little light
+- **frozen:** the picture stops changing
+- **not worn:** the camera has been put down. A head always jitters a little and a table doesn't.
+- **blocked:** hair, a strap or a hand covers part of the view
+- **blur:** judged against each video's own usual sharpness, so a softer camera isn't punished for being soft
+- **dropouts:** frames missing from the file
+
+On 42 hand-checked xPhi clips it finds 95% of the bad stretches, and every stretch it flags really is bad. Every later step skips the flagged footage.
+
+## Step 2: where is this, and what are they doing?
+
+A vision-language model watches the clean footage and answers two questions. egokit runs a custom fine-tuned version of Qwen3-VL.
+
+**Where.** The scene stage samples 8 frames from across the video and queries the model for the place: a sector, a venue and a work area, picked from a curated list. A fixed list matters because "kitchen", "commercial kitchen" and "restaurant back of house" should count as the same place when you balance a training set. Making the model describe what it sees before it picks a label doubled how often it chose the right venue.
+
+<Figure src="/media/egokit/scene-roll-up-item.jpg" alt="A worker at an electronics workbench handling packaged components" caption="The scene stage's answer for this clip: Manufacturing / Electronics Factory / Workbench. Its description: “handling small packaged electronic components, writing on a checklist, and using a ruler … suggesting a quality control or inventory process.”" />
+
+**What.** The segment stage cuts each video into steps. A step is a chunk of work with its own goal that you could give a robot as one instruction, like "measure the item with the ruler" or "roll up the item". The model reads the video in overlapping one-minute windows. Each window is told what came just before, so a step that runs across a window edge keeps its name. Short slips and checks inside a step stay part of that step, instead of being chopped into tiny pieces.
+
+The output is a timeline of named steps, and each step's instruction becomes its language label in the dataset.
+
+## Step 3: hands in 3D
+
+For a robot, the hands are the action. The hands stage finds both hands in every usable frame: 21 points per hand, where they are in the image and where they are in 3D around the camera, plus the wrist's position and rotation. We use a hand-tracking model that outputs hand meshes and hand pose. Hands are stored relative to the head camera, and the camera's own path is tracked so they can also be placed in a fixed world frame.
+
+<FigureGrid cols={2}>
+	<Figure src="/media/egokit/hands-2d.mp4" alt="Hand keypoints drawn over head-camera video" caption="21 points per hand, drawn on the video" />
+	<Figure src="/media/egokit/hands-3d.mp4" alt="The same hand keypoints shown in 3D" caption="The same hands in 3D" />
+</FigureGrid>
+
+<FigureGrid cols={2}>
+	<Figure src="/media/egokit/mesh-strip-wire.mp4" alt="Hand meshes overlaid on a worker stripping wire" caption="Hand meshes: stripping wire" />
+	<Figure src="/media/egokit/mesh-solder.mp4" alt="Hand meshes overlaid on a worker soldering" caption="Hand meshes: soldering" />
+</FigureGrid>
+
+## Step 4: ship it
+
+Finally, the export stage writes the dataset in whichever format your training stack loads, such as [LeRobot](https://github.com/huggingface/lerobot) or MCAP. Each frame holds the head video plus 20 numbers for the two hands: wrist position, wrist rotation and how far apart thumb and index finger are.
+
+Everything the earlier stages produce travels with the video, stored in Parquet files:
+
+| Metadata | What it holds | From |
+| --- | --- | --- |
+| Quality flags | Stretches marked dark, frozen, not worn, blocked, blurry or dropped | Clean |
+| Place | Sector, venue and work area from the fixed list | Scene |
+| Steps | Start and end of each step, with its instruction as the language label | Segment |
+| Hands | 21 points per hand in the image and in 3D, hand meshes, hand pose | Hands |
+| Wrist and grip | Wrist position and rotation, thumb–index distance (20 numbers per frame) | Hands |
+
+## What's next
+
+egokit already takes raw head-camera video to clean, labelled footage with 3D hands. Next on the list:
+
+- **Better hand tracking for edge cases:** hands that are partly hidden, gloved, moving fast or holding tools.
+- **Grasp detection and timing:** when each grasp starts and ends, and what kind of grasp it is.
+- **Object tracking:** which object each hand is holding and how it moves.
+- **Contact and force cues:** when a hand presses, twists or pulls, inferred from the video.
+
+If you're training robots on human video and want to talk about data, email [raushan@xprobotics.ai](mailto:raushan@xprobotics.ai).

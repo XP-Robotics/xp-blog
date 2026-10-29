@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 280" role="img" aria-label="egokit turns raw head-camera video into a robot dataset" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#6b635b"/>
+    </marker>
+  </defs>
+  <g fill="none" stroke="#6b635b" stroke-width="1.25">
+    <path d="M92 76V136" marker-end="url(#arrow)"/>
+    <path d="M154 172H174" marker-end="url(#arrow)"/>
+    <path d="M298 172H318" marker-end="url(#arrow)"/>
+    <path d="M442 172H462" marker-end="url(#arrow)"/>
+    <path d="M586 172H606" marker-end="url(#arrow)"/>
+  </g>
+  <text x="92" y="64" text-anchor="middle" font-size="12" fill="#6b635b">raw head-camera video</text>
+  <g fill="none" stroke="#6b635b" stroke-width="1.25">
+    <rect x="30" y="136" width="124" height="72" rx="8"/>
+    <rect x="174" y="136" width="124" height="72" rx="8"/>
+    <rect x="318" y="136" width="124" height="72" rx="8"/>
+    <rect x="462" y="136" width="124" height="72" rx="8"/>
+  </g>
+  <rect x="606" y="136" width="124" height="72" rx="8" fill="rgb(193,39,45)" fill-opacity="0.08" stroke="rgb(193,39,45)" stroke-width="2"/>
+  <g text-anchor="middle" fill="#14110f">
+    <text x="92" y="160" font-weight="600">Clean</text>
+    <text x="236" y="160" font-weight="600">Scene + steps</text>
+    <text x="380" y="160" font-weight="600">Hands</text>
+    <text x="524" y="160" font-weight="600">Export</text>
+    <text x="668" y="160" font-weight="600">Dataset</text>
+  </g>
+  <g text-anchor="middle" font-size="11.5" fill="#6b635b">
+    <text x="92" y="180">flag dark, blur,</text>
+    <text x="92" y="196">blocked footage</text>
+    <text x="236" y="180">a VLM names the</text>
+    <text x="236" y="196">place and steps</text>
+    <text x="380" y="180">21 points a hand,</text>
+    <text x="380" y="196">meshes, wrist pose</text>
+    <text x="524" y="180">LeRobot, MCAP</text>
+    <text x="524" y="196">and Parquet</text>
+  </g>
+  <g text-anchor="middle" font-size="11.5" fill="#14110f">
+    <text x="668" y="180">ready for robot</text>
+    <text x="668" y="196">training</text>
+  </g>
+  <text x="380" y="252" text-anchor="middle" font-size="11.5" fill="#6b635b">Each stage is one command and writes its results next to the videos for the next stage.</text>
+</svg>

@@ -1,3 +1,11 @@
-<div class="figure-grid">
+---
+interface Props {
+	cols?: number;
+}
+
+const { cols } = Astro.props;
+---
+
+<div class="figure-grid" style={cols ? `grid-template-columns: repeat(${cols}, 1fr)` : undefined}>
 	<slot />
 </div>

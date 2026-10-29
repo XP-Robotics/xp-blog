@@ -12,7 +12,7 @@ npm run build    # static site in dist/
 
 ## Writing a post
 
-Add `src/content/blog/<slug>.mdx` (or `.md`). Copy `example-post.mdx` for the full set of building blocks.
+Add `src/content/blog/<slug>.mdx` (or `.md`). See `egokit.mdx` for figures, video grids and tables.
 
 ```yaml
 ---
@@ -25,7 +25,7 @@ draft: false              # drafts show in dev only
 ---
 ```
 
-- Media goes in `public/media/<slug>/`; use `<Figure src=... caption=... />` (videos autoplay muted) and `<FigureGrid>` for grids.
+- Media goes in `public/media/<slug>/`; use `<Figure src=... caption=... />` (videos autoplay muted) and `<FigureGrid>` for grids (`cols={2}` for a fixed column count).
 - Math: `$inline$` and `$$display$$` (KaTeX).
 
 ## Deploy
