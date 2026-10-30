@@ -30,4 +30,4 @@ draft: false              # drafts show in dev only
 
 ## Deploy
 
-Every push to `main` builds the site and publishes it to GitHub Pages (`.github/workflows/deploy.yml`) at https://xp-robotics.github.io/xp-blog/. The site lives under the `/xp-blog` base path (`astro.config.mjs`), so site-absolute links in posts must include it; `<Figure>` adds it automatically.
+Every push to `main` builds the site and publishes it to GitHub Pages (`.github/workflows/deploy.yml`) at https://blog.xphirobotics.com (`public/CNAME`; DNS has a CNAME `blog` → `xp-robotics.github.io`). The site is served at the root, so site-absolute links in posts start with `/`.
