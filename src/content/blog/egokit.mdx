@@ -2,7 +2,6 @@
 title: "egokit: from raw first-person video to robot training data"
 description: How we turn hours of head-camera footage of people at work into clean, labelled datasets with 3D hands that robot-learning code can load directly.
 date: 2026-10-29
-authors: [Shrivathsa M S]
 ---
 
 import Figure from '../../components/Figure.astro';
@@ -42,13 +41,13 @@ On 42 hand-checked xPhi clips it finds 95% of the bad stretches, and every stret
 
 ## Step 2: where is this, and what are they doing?
 
-A vision-language model watches the clean footage and answers two questions. egokit runs a custom fine-tuned version of Qwen3-VL.
+A vision-language model watches the clean footage and answers two questions. egokit runs a custom fine-tuned local model.
 
 **Where.** The scene stage samples 8 frames from across the video and queries the model for the place: a sector, a venue and a work area, picked from a curated list. A fixed list matters because "kitchen", "commercial kitchen" and "restaurant back of house" should count as the same place when you balance a training set. Making the model describe what it sees before it picks a label doubled how often it chose the right venue.
 
 <Figure src="/media/egokit/scene-roll-up-item.jpg" alt="A worker at an electronics workbench handling packaged components" caption="The scene stage's answer for this clip: Manufacturing / Electronics Factory / Workbench. Its description: “handling small packaged electronic components, writing on a checklist, and using a ruler … suggesting a quality control or inventory process.”" />
 
-**What.** The segment stage cuts each video into steps. A step is a chunk of work with its own goal that you could give a robot as one instruction, like "measure the item with the ruler" or "roll up the item". The model reads the video in overlapping one-minute windows. Each window is told what came just before, so a step that runs across a window edge keeps its name. Short slips and checks inside a step stay part of that step, instead of being chopped into tiny pieces.
+**What.** The segment stage cuts each video into steps. A step is a chunk of work with its own goal that you could give a robot as one instruction, like "measure the item with the ruler" or "roll up the item". The model reads the video in short overlapping windows. Each window is told what came just before, so a step that runs across a window edge keeps its name. Short slips and checks inside a step stay part of that step, instead of being chopped into tiny pieces.
 
 The output is a timeline of named steps, and each step's instruction becomes its language label in the dataset.
 

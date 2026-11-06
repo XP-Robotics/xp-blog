@@ -1,0 +1,86 @@
+---
+title: "Labelling egocentric actions: accuracy is a dial"
+description: "Action-labelling accuracy is a dial: more inference buys more points, with diminishing returns. We measured both ends of the dial on the egocentric subset of WGO-Bench."
+date: 2026-11-05
+---
+
+Action-labelling accuracy is a dial: more inference buys more points, with diminishing returns. We measured both ends of the dial on the egocentric subset of WGO-Bench.
+
+- **Low end:** A local model scores 16 segment F1@0.75 on HomER, ahead of Claude Opus 5 (10.6) and a 397B open model (10.5) in a shared pipeline.
+- **High end:** a hosted frontier model, sent each whole clip as timestamped contact sheets, scores 25 segment F1@0.75, level with the best published hosted pipelines (23.9–26.3). Semantic F1: **19, with 68% of labels right on true segments**.
+
+## Why action labels matter
+
+Most robot policies are trained by imitation: a model sees what the robot would observe, such as camera frames, and learns to predict the action a person took next. Action labels make that possible, because they name each task and mark where it starts and ends, turning raw footage into usable training examples. When labels are vague or boundaries drift, the model blends unrelated motions and learns the wrong task, so label quality directly limits how well the policy performs.
+
+Labelling at that level by hand costs $20–50 per hour of video ([Macrodata Labs](https://macrodata.co/blog/annotating-robot-video-subtasks)), and egocentric datasets now run to tens of thousands of hours. The usual automated answer was temporal action segmentation: models trained on labelled video to assign each frame one action from a fixed list. They need labelled footage to start with and cannot name an action outside that list, so each new domain meant more hand labelling. Vision-language models need neither a fixed list nor labelled footage to start: they read frames directly and name actions in plain words. How well they do depends mainly on model size. Extra passes lift a small model only so far; beyond that, gains come from a larger model or from fine-tuning a small one on labelled footage. This post measures how accuracy trades off against model size, run time and cost on egocentric footage.
+
+## The benchmark: WGO-Bench HomER
+
+We test on HomER, the egocentric subset of [WGO-Bench](https://huggingface.co/datasets/macrodata/WGO-Bench), the action-labelling benchmark published by [Macrodata Labs](https://macrodata.co/blog/annotating-robot-video-subtasks). It is the only subset filmed from a person's head, and it is the hardest for every published system: FLORA's segment F1@0.75 is 23.9 on HomER against 56.1 and 70.8 on the two robot subsets, DROID and Galaxea, and GPT-6 Astra's is 25.2 against 65.5 and 47.2 ([FLORA, Table 2](https://arxiv.org/abs/2610.31779)).
+
+Segment F1 is hard on head-camera footage because actions are many, short and run together. HomER averages about 19 reference actions per clip, against 3 on DROID and 5 on Galaxea ([FLORA, Appendix B.5](https://arxiv.org/abs/2610.31779)), and its median action lasts 2.9 s, so a small timing error can cost a match. People move quickly from one action to the next while their head moves the camera, and hands and objects leave the frame in a changing scene. Robots tend to move more slowly and deliberately, which leaves clearer boundaries, and DROID films from external cameras that don't move with the arm.
+
+|  | HomER |
+| --- | --- |
+| Clips | 25, filmed from a head-worn camera |
+| Length | 96 s on average, 40 min in all |
+| Reference actions | 470, covering each clip with no gaps |
+| Median action | 2.9 s |
+| Each clip comes with | a one-line instruction, e.g. "use pitcher to pour water into tall glass and wine glass" |
+
+Every system is scored three ways:
+
+- **Segment F1 at IoU 0.75:** where the actions are, ignoring their names. A predicted action pairs with a reference one only if they overlap by at least 75% of the time either covers. For a 3 s action, both ends have to land within about 0.4 s. F1 balances missed actions against invented ones.
+- **Labels right on true segments:** the system names the reference segments, and an LLM judge accepts or rejects each name against the reference name with the benchmark's rubric. This scores naming alone.
+- **Semantic F1 at IoU 0.75:** a pair counts only if it matches in time and the judge accepts its name. This is the one number for the whole job, and the one published systems lead with.
+
+## How it works
+
+Action labelling is the segment stage of [egokit](/blog/egokit/), our toolkit that turns first-person video into a dataset robot-learning code can load. Egokit cleans the footage, finds the scene and steps, tracks the hands in 3D, then exports it all, with each step's instruction as its language label.
+
+1. **Usable footage first.** A cheap pass with no model flags spans where the camera is blocked, blurred, set down or failing, and only the rest is labelled.
+2. **Input.** At the low end, each stretch is cut into 16 s windows, and each window is one model call on 64 frames, one every 0.25 s, each sent as its own image. At the high end, each whole clip is one model call on contact sheets: a frame every 0.5 s, tiled up to 20 to a sheet. A 96 s clip is ten sheets and about 80 s of model time.
+3. **Combining.** Each window keeps the part it owns, up to halfway to its neighbours' centres. Neighbouring actions with the same name are joined, and slivers under 0.5 s are dropped.
+4. **Refining.** Every boundary between two actions gets one more call: 4 s of video centred on it, at 8 fps, never past the middle of either action, with both actions' instructions. The model answers the exact time one ends and the next begins, and the boundary moves there.
+
+Each action comes out with its start and end times, a short label ("load_dishwasher") and an instruction ("load the plates into the dishwasher rack").
+
+## What didn't work
+
+Four ideas that look like free wins cost points or time on the local model. Each was compared on HomER against the same settings without it.
+
+| Change | Why we tried it | What happened | Segment F1@0.75 |
+| --- | --- | --- | --- |
+| Tiled contact sheets on local model: 4 frames per image at 320 px, times printed on each | Published pipelines tile up to 20 frames per sheet, so a window can hold more frames | The model labelled each tile as its own action: median action 0.8 s against 2.9 s in the reference. Telling it that an image is not an action changed nothing | 14–15 → 7–8 |
+| A separate naming call per action, on its own frames | Naming with a clean view of just that action should be easier | Names right on matched actions 57% against 58–59% from the window call; about 3 extra minutes per run | no change |
+| Larger frames, 640 px instead of 448 | More detail to see small objects and fingers | 4–7 more points of boundaries found within 2 s, but none placed more exactly; twice the time | 1–3 points lower |
+| A checking pass that re-reads each action and splits or joins it | Catch two actions merged into one, or one cut in two | Of 323 actions, 10 split and 3 joined | no change |
+
+Tiling is a big-model trick: hosted frontier models read a grid of timestamped tiles as one sequence, and smaller open models don't. Our own runs show both sides: contact sheets took the hosted model from 16 to 25, while tiling halved the local model's score.
+
+## Results on HomER
+
+At the low end, our local model cuts better than five of the ten off-the-shelf models in FLORA's comparison, Claude Opus 5 and a 397B open model included; at the top end, our system matches the best published hosted systems. Its names are the most accurate in the table, 68% right on true segments against 64% for the next best, and its semantic F1 of 19 is level with GPT-6 Astra's 19.3.
+
+| System | Segment F1@0.75 | Labels right on true segments (%) | Semantic F1@0.75 |
+| --- | --- | --- | --- |
+| **Ours, hosted frontier model** | **25** | **68** | **19** |
+| **Ours, local model** | **16** | **45** | **8** |
+| Refiner, Gemini 3.8 Flash | 26.3 | 60.0 | 20.7 |
+| GPT-6 Astra, two-call pipeline | 25.2 | 64.0 | 19.3 |
+| FLORA (fine-tuned 9B and 27B) | 23.9 | 64.0 | 17.9 |
+
+Published figures are from [FLORA](https://research.nvidia.com/labs/gear/flora) and [Macrodata](https://macrodata.co/blog/annotating-robot-video-subtasks). "Two-call pipeline" is FLORA's common setup for off-the-shelf models: one call on tiled contact sheets, then one naming call per action.
+
+## What's hard
+
+The biggest loss is timing, not naming. The model proposes 346 actions against 470 in the reference, and 39% of the reference boundaries have no predicted one within 2 s; refining can move a boundary but never adds one. Short actions suffer most, since a 1 s grab or release is only four frames at 4 fps. Of the actions that do pair at IoU 0.75, about half get a name the judge accepts.
+
+## What's next
+
+The dial has a third setting we haven't turned yet: training. The benchmark's own scores make a direct reward, so the next step is fine-tuning the small model on marked egocentric footage, first supervised, then with reinforcement learning on segment F1. FLORA's fine-tuned 9B and 27B models show how far that can move a small model.
+
+After that, actions roll up: consecutive actions grouped into steps ("make tea"), and steps into tasks, from the action list alone with no second pass over the video.
+
+**Labelling egocentric or robot video?** Request a sample run on your footage [raushan@xprobotics.ai](mailto:raushan@xprobotics.ai).
