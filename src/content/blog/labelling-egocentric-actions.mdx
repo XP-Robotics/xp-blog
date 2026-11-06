@@ -4,6 +4,8 @@ description: "Action-labelling accuracy is a dial: more inference buys more poin
 date: 2026-11-05
 ---
 
+import Figure from '../../components/Figure.astro';
+
 Action-labelling accuracy is a dial: more inference buys more points, with diminishing returns. We measured both ends of the dial on the egocentric subset of WGO-Bench.
 
 - **Low end:** A local model scores 16 segment F1@0.75 on HomER, ahead of Claude Opus 5 (10.6) and a 397B open model (10.5) in a shared pipeline.
@@ -13,11 +15,13 @@ Action-labelling accuracy is a dial: more inference buys more points, with dimin
 
 Most robot policies are trained by imitation: a model sees what the robot would observe, such as camera frames, and learns to predict the action a person took next. Action labels make that possible, because they name each task and mark where it starts and ends, turning raw footage into usable training examples. When labels are vague or boundaries drift, the model blends unrelated motions and learns the wrong task, so label quality directly limits how well the policy performs.
 
-Labelling at that level by hand costs $20–50 per hour of video ([Macrodata Labs](https://macrodata.co/blog/annotating-robot-video-subtasks)), and egocentric datasets now run to tens of thousands of hours. The usual automated answer was temporal action segmentation: models trained on labelled video to assign each frame one action from a fixed list. They need labelled footage to start with and cannot name an action outside that list, so each new domain meant more hand labelling. Vision-language models need neither a fixed list nor labelled footage to start: they read frames directly and name actions in plain words. How well they do depends mainly on model size. Extra passes lift a small model only so far; beyond that, gains come from a larger model or from fine-tuning a small one on labelled footage. This post measures how accuracy trades off against model size, run time and cost on egocentric footage.
+Labelling at that level by hand costs \$20–50 per hour of video ([Macrodata Labs](https://macrodata.co/blog/annotating-robot-video-subtasks)), and egocentric datasets now run to tens of thousands of hours. The usual automated answer was temporal action segmentation: models trained on labelled video to assign each frame one action from a fixed list. They need labelled footage to start with and cannot name an action outside that list, so each new domain meant more hand labelling. Vision-language models need neither a fixed list nor labelled footage to start: they read frames directly and name actions in plain words. How well they do depends mainly on model size. Extra passes lift a small model only so far; beyond that, gains come from a larger model or from fine-tuning a small one on labelled footage. This post measures how accuracy trades off against model size, run time and cost on egocentric footage.
 
 ## The benchmark: WGO-Bench HomER
 
 We test on HomER, the egocentric subset of [WGO-Bench](https://huggingface.co/datasets/macrodata/WGO-Bench), the action-labelling benchmark published by [Macrodata Labs](https://macrodata.co/blog/annotating-robot-video-subtasks). It is the only subset filmed from a person's head, and it is the hardest for every published system: FLORA's segment F1@0.75 is 23.9 on HomER against 56.1 and 70.8 on the two robot subsets, DROID and Galaxea, and GPT-6 Astra's is 25.2 against 65.5 and 47.2 ([FLORA, Table 2](https://arxiv.org/abs/2610.31779)).
+
+<Figure src="/media/labelling-egocentric-actions/scores-by-subset.svg" alt="Segment F1 at IoU 0.75 by subset. FLORA: HomER 23.9, DROID 56.1, Galaxea 70.8. GPT-6 Astra: 25.2, 65.5, 47.2. Refiner with Gemini 3.8 Flash: 26.3, 48.2, 51.5." caption="Segment F1@0.75 by subset. Every system scores lowest on HomER." />
 
 Segment F1 is hard on head-camera footage because actions are many, short and run together. HomER averages about 19 reference actions per clip, against 3 on DROID and 5 on Galaxea ([FLORA, Appendix B.5](https://arxiv.org/abs/2610.31779)), and its median action lasts 2.9 s, so a small timing error can cost a match. People move quickly from one action to the next while their head moves the camera, and hands and objects leave the frame in a changing scene. Robots tend to move more slowly and deliberately, which leaves clearer boundaries, and DROID films from external cameras that don't move with the arm.
 
@@ -63,6 +67,8 @@ Tiling is a big-model trick: hosted frontier models read a grid of timestamped t
 
 At the low end, our local model cuts better than five of the ten off-the-shelf models in FLORA's comparison, Claude Opus 5 and a 397B open model included; at the top end, our system matches the best published hosted systems. Its names are the most accurate in the table, 68% right on true segments against 64% for the next best, and its semantic F1 of 19 is level with GPT-6 Astra's 19.3.
 
+<Figure src="/media/labelling-egocentric-actions/scores-homer.svg" alt="Segment F1 at IoU 0.75 on HomER. Refiner with Gemini 3.8 Flash 26.3, GPT-6 Astra 25.2, ours at the top end 25, FLORA 23.9, Gemini 3.8 Flash 23.9, ours with a local model 16, a 27B open model 12.7, Claude Opus 5 10.6, a 397B open model 10.5." caption="Segment F1@0.75 on HomER. Off-the-shelf models run in FLORA's two-call pipeline." />
+
 | System | Segment F1@0.75 | Labels right on true segments (%) | Semantic F1@0.75 |
 | --- | --- | --- | --- |
 | **Ours, hosted frontier model** | **25** | **68** | **19** |
@@ -72,6 +78,19 @@ At the low end, our local model cuts better than five of the ten off-the-shelf m
 | FLORA (fine-tuned 9B and 27B) | 23.9 | 64.0 | 17.9 |
 
 Published figures are from [FLORA](https://research.nvidia.com/labs/gear/flora) and [Macrodata](https://macrodata.co/blog/annotating-robot-video-subtasks). "Two-call pipeline" is FLORA's common setup for off-the-shelf models: one call on tiled contact sheets, then one naming call per action.
+
+## Run time and cost
+
+Each run below labels all 25 HomER clips, 40 minutes of video.
+
+| Setup | Run time | Cost | Segment F1@0.75 | Semantic F1@0.75 |
+| --- | --- | --- | --- | --- |
+| Local model | 22–24 min | self-hosted | 16 | 8 |
+| Hosted model | about 5 min | \$3–5 | 25 | 19 |
+
+The hosted run handles 5 clips at a time, its cost is an estimate, and its scores come from a single run.
+
+\$3–5 for 40 minutes works out at about \$4.50–7.50 per hour of video, against \$20–50 by hand. The local model charges no per-call fee and keeps footage on our machines, but takes about five times as long as the hosted run.
 
 ## What's hard
 

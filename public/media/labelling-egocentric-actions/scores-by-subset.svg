@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 302" role="img" aria-label="Segment F1 at IoU 0.75 by WGO-Bench subset: every system scores lowest on HomER, 23.9 to 26.3, against 47.2 to 70.8 on the robot subsets" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+<rect x="200" y="8" width="12" height="12" rx="2" fill="#C1272D"/>
+<text x="218" y="19" fill="#6b635b" text-anchor="start" font-size="14">HomER (head camera)</text>
+<rect x="374.6" y="8" width="12" height="12" rx="2" fill="#1B78AE"/>
+<text x="392.6" y="19" fill="#6b635b" text-anchor="start" font-size="14">DROID</text>
+<rect x="445.6" y="8" width="12" height="12" rx="2" fill="#B5790F"/>
+<text x="463.6" y="19" fill="#6b635b" text-anchor="start" font-size="14">Galaxea</text>
+<path d="M200 38V286" stroke="#e3d9ce" stroke-width="1"/>
+<text x="188" y="81.0" fill="#14110f" text-anchor="end" font-size="14">FLORA</text>
+<path d="M200 44H346.6Q350.6 44 350.6 48V60Q350.6 64 346.6 64H200Z" fill="#C1272D"/>
+<text x="358.57" y="59" fill="#6b635b" text-anchor="start" font-size="14">23.9</text>
+<path d="M200 66H549.4Q553.4 66 553.4 70V82Q553.4 86 549.4 86H200Z" fill="#1B78AE"/>
+<text x="561.4300000000001" y="81" fill="#6b635b" text-anchor="start" font-size="14">56.1</text>
+<path d="M200 88H642.0Q646.0 88 646.0 92V104Q646.0 108 642.0 108H200Z" fill="#B5790F"/>
+<text x="654.04" y="103" fill="#6b635b" text-anchor="start" font-size="14">70.8</text>
+<text x="188" y="167.0" fill="#14110f" text-anchor="end" font-size="14">GPT-6 Astra</text>
+<path d="M200 130H354.8Q358.8 130 358.8 134V146Q358.8 150 354.8 150H200Z" fill="#C1272D"/>
+<text x="366.76" y="145" fill="#6b635b" text-anchor="start" font-size="14">25.2</text>
+<path d="M200 152H608.6Q612.6 152 612.6 156V168Q612.6 172 608.6 172H200Z" fill="#1B78AE"/>
+<text x="620.65" y="167" fill="#6b635b" text-anchor="start" font-size="14">65.5</text>
+<path d="M200 174H493.4Q497.4 174 497.4 178V190Q497.4 194 493.4 194H200Z" fill="#B5790F"/>
+<text x="505.36" y="189" fill="#6b635b" text-anchor="start" font-size="14">47.2</text>
+<text x="188" y="253.0" fill="#14110f" text-anchor="end" font-size="14">Refiner, Gemini 3.8 Flash</text>
+<path d="M200 216H361.7Q365.7 216 365.7 220V232Q365.7 236 361.7 236H200Z" fill="#C1272D"/>
+<text x="373.69" y="231" fill="#6b635b" text-anchor="start" font-size="14">26.3</text>
+<path d="M200 238H499.7Q503.7 238 503.7 242V254Q503.7 258 499.7 258H200Z" fill="#1B78AE"/>
+<text x="511.66" y="253" fill="#6b635b" text-anchor="start" font-size="14">48.2</text>
+<path d="M200 260H520.5Q524.5 260 524.5 264V276Q524.5 280 520.5 280H200Z" fill="#B5790F"/>
+<text x="532.45" y="275" fill="#6b635b" text-anchor="start" font-size="14">51.5</text>
+</svg>

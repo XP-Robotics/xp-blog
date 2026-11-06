@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 326" role="img" aria-label="Segment F1 at IoU 0.75 on HomER: our hosted setup scores 25 and our local model 16, against 10.5 to 26.3 for published systems" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+<path d="M236 10V316" stroke="#e3d9ce" stroke-width="1"/>
+<text x="224" y="32.0" fill="#6b635b" text-anchor="end" font-size="14">Refiner, Gemini 3.8 Flash</text>
+<path d="M236 16.0H642.3Q646.3 16.0 646.3 20.0V34.0Q646.3 38.0 642.3 38.0H236Z" fill="#B5A99C"/>
+<text x="654.28" y="32.0" fill="#6b635b" text-anchor="start" font-size="14">26.3</text>
+<text x="224" y="66.0" fill="#6b635b" text-anchor="end" font-size="14">GPT-6 Astra</text>
+<path d="M236 50.0H625.1Q629.1 50.0 629.1 54.0V68.0Q629.1 72.0 625.1 72.0H236Z" fill="#B5A99C"/>
+<text x="637.12" y="66.0" fill="#6b635b" text-anchor="start" font-size="14">25.2</text>
+<text x="224" y="100.0" fill="#14110f" text-anchor="end" font-size="14" font-weight="600">Ours, top end</text>
+<path d="M236 84.0H622.0Q626.0 84.0 626.0 88.0V102.0Q626.0 106.0 622.0 106.0H236Z" fill="#C1272D"/>
+<text x="634.0" y="100.0" fill="#14110f" text-anchor="start" font-size="14" font-weight="600">25</text>
+<text x="224" y="134.0" fill="#6b635b" text-anchor="end" font-size="14">FLORA (fine-tuned)</text>
+<path d="M236 118.0H604.8Q608.8 118.0 608.8 122.0V136.0Q608.8 140.0 604.8 140.0H236Z" fill="#B5A99C"/>
+<text x="616.8399999999999" y="134.0" fill="#6b635b" text-anchor="start" font-size="14">23.9</text>
+<text x="224" y="168.0" fill="#6b635b" text-anchor="end" font-size="14">Gemini 3.8 Flash</text>
+<path d="M236 152.0H604.8Q608.8 152.0 608.8 156.0V170.0Q608.8 174.0 604.8 174.0H236Z" fill="#B5A99C"/>
+<text x="616.8399999999999" y="168.0" fill="#6b635b" text-anchor="start" font-size="14">23.9</text>
+<text x="224" y="202.0" fill="#14110f" text-anchor="end" font-size="14" font-weight="600">Ours, local model</text>
+<path d="M236 186.0H481.6Q485.6 186.0 485.6 190.0V204.0Q485.6 208.0 481.6 208.0H236Z" fill="#C1272D"/>
+<text x="493.6" y="202.0" fill="#14110f" text-anchor="start" font-size="14" font-weight="600">16</text>
+<text x="224" y="236.0" fill="#6b635b" text-anchor="end" font-size="14">27B open model</text>
+<path d="M236 220.0H430.1Q434.1 220.0 434.1 224.0V238.0Q434.1 242.0 430.1 242.0H236Z" fill="#B5A99C"/>
+<text x="442.12" y="236.0" fill="#6b635b" text-anchor="start" font-size="14">12.7</text>
+<text x="224" y="270.0" fill="#6b635b" text-anchor="end" font-size="14">Claude Opus 5</text>
+<path d="M236 254.0H397.4Q401.4 254.0 401.4 258.0V272.0Q401.4 276.0 397.4 276.0H236Z" fill="#B5A99C"/>
+<text x="409.36" y="270.0" fill="#6b635b" text-anchor="start" font-size="14">10.6</text>
+<text x="224" y="304.0" fill="#6b635b" text-anchor="end" font-size="14">397B open model</text>
+<path d="M236 288.0H395.8Q399.8 288.0 399.8 292.0V306.0Q399.8 310.0 395.8 310.0H236Z" fill="#B5A99C"/>
+<text x="407.79999999999995" y="304.0" fill="#6b635b" text-anchor="start" font-size="14">10.5</text>
+</svg>
