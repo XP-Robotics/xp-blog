@@ -1,0 +1,133 @@
+
+---
+title: 'ACT vs SmolVLA on SO-101: What 120 Real-Robot Trials Showed'
+description: 'A preliminary real-world benchmark of ACT and SmolVLA across pen transfer, blue-cube placement, and multi-object packing on the SO-101 robot.'
+date: 2026-11-23
+authors: [Ley Robotics]
+draft: true
+---
+
+import Figure from '../../components/Figure.astro';
+
+We compared **Action Chunking with Transformers (ACT)** and **SmolVLA** on a physical SO-101 robot arm. Rather than reporting only a single success number, we examined how the two deployed policies behaved on three manipulation tasks, what went wrong, and which limits remain in our evaluation.
+
+**The headline result:** ACT completed **36/60 trials (60%)** and SmolVLA completed **30/60 (50%)** across the original 120-trial benchmark. These are preliminary results for our specific setup, **not proof that one model architecture is universally better**.
+
+## Robot and data collection
+
+We used an SO-101 leader arm to teleoperate an SO-101 follower arm. Each demonstration captured six-dimensional robot state and action data together with two RGB camera views: an overhead Logitech Brio 100 and a board-mounted Sonix camera. Recording was at **30 FPS**.
+
+We collected **100 demonstrations for each task** (300 total) and fine-tuned or trained task-specific policies. We then evaluated each model on **20 physical trials per task**.
+
+## The three physical tasks
+
+### Task 1 — Transfer a pen from left to right
+
+The robot had to grasp a pen placed on the left side of the workspace and put it on the right. This tests approach, grasping, transport, and release.
+
+**Object:** pen.
+
+<Figure src="/media/so101-act-vs-smolvla/pen-start.jpg" caption="Pen transfer — start of demonstration episode 0 (overhead view, 1 s)." />
+
+<Figure src="/media/so101-act-vs-smolvla/pen-end.jpg" caption="Pen transfer — end of the same demonstration (11 s)." />
+
+### Task 2 — Select the blue cube and place it in a box
+
+The workspace contained a blue cube alongside two black cubes. The goal was to select the blue cube, grasp it, and place it in the box without confusing it with the distractors.
+
+**Objects:** blue cube, two black cubes, box.
+
+<Figure src="/media/so101-act-vs-smolvla/cube-start.jpg" caption="Blue-cube task — start of demonstration episode 0 (1 s)." />
+
+<Figure src="/media/so101-act-vs-smolvla/cube-end.jpg" caption="Blue cube placed in the box — end of the same demonstration (11 s)." />
+
+### Task 3 — Pack multiple objects into a box
+
+This task required several grasp–transport–release cycles in one episode. Finishing one pickup was not enough: all required items had to be placed in the box.
+
+**Objects:** adapter, charging cable, pendrive holder, box.
+
+<Figure src="/media/so101-act-vs-smolvla/packing-start.jpg" caption="Multi-object packing — initial arrangement, demonstration episode 0 (1 s)." />
+
+<Figure src="/media/so101-act-vs-smolvla/packing-end.jpg" caption="Multi-object packing — end of the same recorded demonstration (26 s)." />
+
+## Training and deployed policies
+
+**ACT** uses transformer action chunking with a conditional variational autoencoder (CVAE) and a ResNet18 vision backbone. Its policy predicts chunks of **100 actions**. During our original robot evaluations, the ACT runner executed **one action at a time** (`n_action_steps = 1`) and used **temporal ensembling** (`temporal_ensemble_coeff = 0.01`), combining overlapping predictions from frequent re-observations.
+
+**SmolVLA** is a pretrained vision-language-action policy with a flow-matching action expert. We fine-tuned the pretrained `lerobot/smolvla_base` for each task. In the original evaluation, SmolVLA used **50-action chunks**, executing `n_action_steps = 50` without temporal ensembling.
+
+The saved checkpoints evaluated in the robot tests were:
+
+| Task | ACT checkpoint | SmolVLA checkpoint |
+| --- | ---: | ---: |
+| Pen transfer | 70,000 | 80,000 |
+| Blue-cube placement | 60,000 | 80,000 |
+| Multi-object packing | 100,000 | 80,000 |
+
+These are **checkpoint step labels**, not independently verified totals for elapsed training or completed optimization steps.
+
+The inference strategies were also different: ACT received fresh visual feedback more frequently than the original SmolVLA setup. Our comparison therefore measures the **deployed systems as configured**, rather than isolating architecture as the only variable.
+
+## Results: 120 original trials
+
+A trial counted as successful when the required final physical state was achieved without human correction.
+
+| Task | ACT | SmolVLA |
+| --- | ---: | ---: |
+| Pen transfer | **20/20 (100%)** | 17/20 (85%) |
+| Blue-cube placement | 10/20 (50%) | 10/20 (50%) |
+| Multi-object packing | **6/20 (30%)** | 3/20 (15%) |
+| **Overall** | **36/60 (60%)** | **30/60 (50%)** |
+
+<Figure src="/media/so101-act-vs-smolvla/task-success.png" caption="Task-wise success percentages across the original trials (20 trials for each model–task pair)." />
+
+<Figure src="/media/so101-act-vs-smolvla/overall-success.png" caption="Overall success: 60% for ACT and 50% for SmolVLA across 60 original trials per policy." />
+
+The observed ACT lead was **10 percentage points**, corresponding to **six additional completed trials**. Pen transfer was most reliable, blue-cube placement remained inconsistent, and packing was the hardest task for both systems. With just 20 trials per task, one success changes a task percentage by five points, so modest differences deserve caution.
+
+## Why failures matter
+
+A single failed trial can include several mechanisms: a gripper closing beside an object, an unstable grasp, slipping during transport, selecting the wrong target, or repeating an unproductive motion. We categorized these separately rather than treating every unsuccessful trial as identical.
+
+We also distinguished **hardware and camera failures** from model decisions. Original records included camera-related safety stops in four SmolVLA packing trials and one SmolVLA blue-cube trial. The wrist-flex motor horn also became loose during the broader evaluation, changing the physical robot condition.
+
+One procedural caveat matters: the first four original SmolVLA packing trials had a **45-second limit**, while later packing trials used **100 seconds**. This makes the comparison less controlled than a strict architecture-only experiment.
+
+### A separate camera-error retest
+
+We ran four additional SmolVLA packing episodes with the original 80,000-step checkpoint, 50-action execution, and a consistent 100-second limit. No safety stop was recorded, but **none of the four completed the task (0/4)**.
+
+Those four episodes are a **separate retest**. They are not merged into the original 20 packing trials or its 15% result.
+
+## Recovery behavior: still under review
+
+Recovery means an autonomous correction after a visible mistake, even if the overall episode eventually fails. In the reviewed subset, 12 positive recoveries had been annotated: **3 for ACT** and **9 for SmolVLA**.
+
+<Figure src="/media/so101-act-vs-smolvla/recovery-annotations.png" caption="Positive recovery annotations in the partially reviewed subset. These are not recovery rates." />
+
+At the review snapshot, **32 of 120** original trials had completed video verification. Missed recovery opportunities had not been counted consistently, so the dataset does **not yet support a defensible recovery-rate comparison**. We should not turn the positive annotation counts into percentages of recovery success.
+
+## What we learned
+
+In this physical benchmark, our ACT configuration led overall at **60% versus 50%** and performed especially well on the pen-transfer task. Both approaches struggled with color-specific placement and the longer-horizon packing task.
+
+But these results do not establish that ACT's architecture or temporal ensembling alone caused the difference. The models had different feedback schedules, and some trials were affected by camera faults, a mechanical repair, and inconsistent time limits. Future experiments should standardize these conditions and finish the complete dual-camera review before stronger claims are made.
+
+**Status: preliminary research report.** Our success numbers reflect the recorded trial outcomes, while some failure and recovery annotations still require review.
+
+## Datasets and source material
+
+**Public demonstration datasets** (100 episodes per task):
+
+- [Pen transfer](https://huggingface.co/datasets/gowtham070707/so101_pen_left_to_right_v1)
+- [Blue-cube placement](https://huggingface.co/datasets/gowtham070707/so101_blue_cube_to_box_v1)
+- [Multi-object packing](https://huggingface.co/datasets/gowtham070707/so101_multi_object_packing_v2)
+
+**Trial repositories** (currently private; authorized Hugging Face sign-in is required):
+
+- [Pen-transfer evaluation records](https://huggingface.co/datasets/gowtham070707/so101_benchmark_trial_pen_shift)
+- [Blue-cube evaluation records](https://huggingface.co/datasets/gowtham070707/so101_benchmark_trial_blue_cube)
+- [Multi-object packing evaluation records](https://huggingface.co/datasets/gowtham070707/so101_benchmark_trial_multi_object_packing)
+
+**Model documentation:** [LeRobot ACT](https://huggingface.co/docs/lerobot/act) and [LeRobot SmolVLA](https://huggingface.co/docs/lerobot/main/smolvla).
